@@ -1,0 +1,15 @@
+name: ArenaPlugin
+version: 1.0.0
+main: me.levikehh.arena.ArenaPlugin
+api-version: 1.21.9
+author: levikethingz
+description: A plugin to start PvP fights on your Minecraft server
+
+commands:
+  arena:
+    description: Manage arena functionalities
+    usage: "Usage: /arena [challange]"
+
+permissions:
+  arena.*:
+    description: Gives access to all arena commands
