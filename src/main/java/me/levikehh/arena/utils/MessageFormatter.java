@@ -20,6 +20,10 @@ public class MessageFormatter {
         return ChatColor.AQUA + "[" + message + "]" + ChatColor.RESET;
     }
 
+    public static String header(String text) {
+        return ChatColor.GOLD + "=== " + text + " ===";
+    }
+
     public static String formatLocation(Location location) {
         return String.format(
                 ChatColor.GREEN + "x: " +

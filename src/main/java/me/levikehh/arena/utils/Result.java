@@ -1,5 +1,8 @@
 package me.levikehh.arena.utils;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 public class Result<T> {
     private final T value;
     private final String error;
@@ -45,5 +48,41 @@ public class Result<T> {
 
     public String getError() {
         return this.error;
+    }
+
+    public Result<T> ifSuccess(Consumer<T> action) {
+        if (this.success && this.value != null) {
+            action.accept(this.value);
+        }
+        return this;
+    }
+
+    public Result<T> ifFailure(Consumer<String> action) {
+        if (!this.success) {
+            action.accept(this.error);
+        }
+        return this;
+    }
+
+    public <U> Result<U> map(Function<T, U> mapper) {
+        if (success) {
+            try {
+                return Result.success(mapper.apply(value));
+            } catch (Exception e) {
+                return Result.failure(e);
+            }
+        }
+        return Result.failure(error);
+    }
+
+    public T orElse(T defaultValue) {
+        return success ? value : defaultValue;
+    }
+
+    public T orElseThrow() throws Exception {
+        if (success) {
+            return value;
+        }
+        throw new Exception(error);
     }
 }
