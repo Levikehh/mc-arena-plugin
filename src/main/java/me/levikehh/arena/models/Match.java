@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.bukkit.entity.Player;
 
 public class Match {
+    private final String id;
     private final Arena arena;
     private final Player player1;
     private final Player player2;
@@ -21,6 +22,7 @@ public class Match {
     }
 
     public Match(Arena arena, Player player1, Player player2, int durationSeconds) {
+        this.id = "match_" + UUID.randomUUID().toString();
         this.arena = arena;
         this.player1 = player1;
         this.player2 = player2;
@@ -28,6 +30,10 @@ public class Match {
         this.durationSeconds = durationSeconds;
         this.remainingSeconds = durationSeconds;
         this.state = MatchState.WAITING;
+    }
+
+    public String getId() {
+        return this.id;
     }
 
     public Arena getArena() {
@@ -70,6 +76,10 @@ public class Match {
 
     public long getStartTime() {
         return this.startTime;
+    }
+
+    public int getDuration() {
+        return this.durationSeconds;
     }
 
     public int getRemainingSeconds() {

@@ -36,7 +36,7 @@ public class MatchResultRepository {
                     "player2_uuid, player2_name, winner_uuid, result_type, duration_seconds, started_at) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             
             pstmt.setInt(1, arenaId);
@@ -59,8 +59,8 @@ public class MatchResultRepository {
             pstmt.executeUpdate();
             
             // Update player stats
-            updatePlayerStats(player1, matchResult);
-            updatePlayerStats(player2, matchResult);
+            this.updatePlayerStats(player1, matchResult);
+            this.updatePlayerStats(player2, matchResult);
             
             // Get generated ID
             ResultSet rs = pstmt.getGeneratedKeys();
@@ -84,7 +84,7 @@ public class MatchResultRepository {
                                "(player_uuid, player_name, total_matches, wins, losses, draws, kills, deaths) " +
                                "VALUES (?, ?, 0, 0, 0, 0, 0, 0)";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(insertOrIgnore)) {
             
             pstmt.setString(1, player.getUniqueId().toString());
@@ -115,7 +115,7 @@ public class MatchResultRepository {
                     "updated_at = CURRENT_TIMESTAMP " +
                     "WHERE player_uuid = ?";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, isWinner ? 1 : 0);
@@ -145,7 +145,7 @@ public class MatchResultRepository {
                     "ORDER BY mr.ended_at DESC " +
                     "LIMIT ?";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, limit);
@@ -186,7 +186,7 @@ public class MatchResultRepository {
                     "ORDER BY mr.ended_at DESC " +
                     "LIMIT ?";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             String uuidStr = playerUuid.toString();
@@ -224,7 +224,7 @@ public class MatchResultRepository {
     public Result<PlayerStats> getPlayerStats(UUID playerUuid) {
         String sql = "SELECT * FROM player_stats WHERE player_uuid = ?";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, playerUuid.toString());
@@ -265,7 +265,7 @@ public class MatchResultRepository {
                     "ORDER BY wins DESC, total_matches ASC " +
                     "LIMIT ?";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, limit);
@@ -349,13 +349,13 @@ public class MatchResultRepository {
         }
         
         public double getWinRate() {
-            if (totalMatches == 0) return 0.0;
-            return (double) wins / totalMatches * 100.0;
+            if (this.totalMatches == 0) return 0.0;
+            return (double) this.wins / this.totalMatches * 100.0;
         }
         
         public double getKDRatio() {
-            if (deaths == 0) return kills;
-            return (double) kills / deaths;
+            if (this.deaths == 0) return this.kills;
+            return (double) this.kills / this.deaths;
         }
     }
 }

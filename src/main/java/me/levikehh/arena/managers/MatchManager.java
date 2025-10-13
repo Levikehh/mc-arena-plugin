@@ -12,7 +12,7 @@ import me.levikehh.arena.models.MatchResult.ResultType;
 import me.levikehh.arena.utils.MessageBuilder;
 import me.levikehh.arena.utils.MessageFormatter;
 import me.levikehh.arena.utils.TimeFormatter;
-
+import me.levikehh.arena.utils.TimedTask;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -29,7 +29,7 @@ public class MatchManager {
     private final ArenaPlugin plugin;
     private final TimerManager timer;
     private final Map<UUID, Match> activeMatches;
-    private final List<PendingMatch> pendingMatches;
+    private final List<TimedTask<PendingMatch>> pendingMatches;
 
     private MatchManager(ArenaPlugin plugin, TimerManager timer) {
         this.plugin = plugin;
@@ -47,19 +47,29 @@ public class MatchManager {
     }
 
     public boolean removePendingMatch(Player player1, Player player2) {
+        // TODO: could be done by checking id, but wanna make sure the player objects are the same so no MITM can be achieved.
         return this.pendingMatches.removeIf(pendingMatch -> {
-            return pendingMatch.getInitiator().equals(player1) && pendingMatch.getTarget().equals(player2);
+            return pendingMatch.getData().getInitiator().equals(player1) &&
+                    pendingMatch.getData().getTarget().equals(player2);
         });
     }
 
     public List<PendingMatch> getPendingMatches() {
-        return this.pendingMatches;
+        List<PendingMatch> result = new ArrayList<>();
+        for (TimedTask<PendingMatch> pendingMatchTask : this.pendingMatches) {
+            result.add(pendingMatchTask.getData());
+        }
+        return result;
     }
 
     public boolean setPendingMatch(PendingMatch pendingMatch) {
-        if (this.pendingMatches.contains(pendingMatch)) {
+        TimedTask<PendingMatch> task = this.timer.getTask("pending_" + pendingMatch.getId());
+
+        if (task != null) {
             pendingMatch.getInitiator().spigot()
-                    .sendMessage(new MessageBuilder().addError("You already challenged this player").build());
+                    .sendMessage(new MessageBuilder()
+                            .addError("You already challenged this player. You can challenge them again in ")
+                            .addVariable(TimeFormatter.formatTimeReadable(task.getRemainingSeconds())).build());
             return false;
         }
 
@@ -75,9 +85,17 @@ public class MatchManager {
             return false;
         }
 
-        
+        this.timer.startTimer(
+                "pending_" + pendingMatch.getId(),
+                pendingMatch,
+                60,
+                null,
+                () -> {
+                    this.pendingMatches.remove(task);
+                });
 
-        this.pendingMatches.add(pendingMatch);
+        this.pendingMatches.add(task);
+
         return true;
     }
 
@@ -117,26 +135,22 @@ public class MatchManager {
         Player p1 = match.getPlayer1();
         Player p2 = match.getPlayer2();
 
-        new org.bukkit.scheduler.BukkitRunnable() {
-            int countdown = 3;
+        this.timer.startTimer(
+                "countdown_" + match.getId(),
+                null,
+                3,
+                (remainingSeconds) -> {
+                    if (remainingSeconds > 0) {
+                        String message = ChatColor.GOLD + "" + ChatColor.BOLD + remainingSeconds;
+                        p1.sendTitle(message, "", 0, 20, 10);
+                        p2.sendTitle(message, "", 0, 20, 10);
 
-            @Override
-            public void run() {
-                if (countdown > 0) {
-                    String message = ChatColor.GOLD + "" + ChatColor.BOLD + countdown;
-                    p1.sendTitle(message, "", 0, 20, 10);
-                    p2.sendTitle(message, "", 0, 20, 10);
-
-                    p1.playSound(p1.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 1.0f);
-                    p2.playSound(p2.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 1.0f);
-
-                    countdown--;
-                } else {
-                    cancel();
+                        p1.playSound(p1.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 1.0f);
+                        p2.playSound(p2.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 1.0f);
+                    }
+                }, () -> {
                     beginMatch(match);
-                }
-            }
-        }.runTaskTimer(plugin, 0L, 20L);
+                });
     }
 
     private void beginMatch(Match match) {
@@ -152,7 +166,10 @@ public class MatchManager {
         p1.playSound(p1.getLocation(), org.bukkit.Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 1.0f);
         p2.playSound(p2.getLocation(), org.bukkit.Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 1.0f);
 
-        this.timer.startTimer(match,
+        this.timer.startTimer(
+                match.getId(),
+                match,
+                match.getDuration(),
                 (remainingSeconds) -> {
                     updateMatchDisplay(match, remainingSeconds);
                 },
@@ -178,7 +195,7 @@ public class MatchManager {
     }
 
     private void endMatch(Match match, MatchResult.ResultType resultType, Player winner, Player loser) {
-        this.timer.stopTimer(match);
+        this.timer.stopTimer(match.getId());
 
         match.setState(Match.MatchState.FINISHED);
 

@@ -148,20 +148,24 @@ public class ArenaCommand implements CommandExecutor {
     }
 
     private void listArenas(Player player) {
-        List<Arena> arenas = (List<Arena>) this.arenaManager.getAllArenas();
-
-        if (arenas.isEmpty()) {
-            player.sendMessage(MessageFormatter.error("No arenas have been created yet!"));
-            return;
-        }
-
-        player.sendMessage(MessageFormatter.header("Arenas (" + arenas.size() + ")"));
-
-        for (Arena arena : arenas) {
-            String status = arena.isOccupied() ? "[OCCUPIED]" : "[AVAILABLE]";
-
-            player.spigot().sendMessage(new MessageBuilder().addSuccess("• ").addVariable(arena.getName())
-                    .addSuccess(" ").addVariable(status).build());
+        try {
+            List<Arena> arenas = (List<Arena>) this.arenaManager.getAllArenas();
+    
+            if (arenas.isEmpty()) {
+                player.sendMessage(MessageFormatter.error("No arenas have been created yet!"));
+                return;
+            }
+    
+            player.sendMessage(MessageFormatter.header("Arenas (" + arenas.size() + ")"));
+    
+            for (Arena arena : arenas) {
+                String status = arena.isOccupied() ? "[OCCUPIED]" : "[AVAILABLE]";
+    
+                player.spigot().sendMessage(new MessageBuilder().addSuccess("• ").addVariable(arena.getName())
+                        .addSuccess(" ").addVariable(status).build());
+            }
+        } catch (Exception e) {
+            this.plugin.getLogger().severe("Unexpected error: " + e.getMessage());
         }
     }
 

@@ -34,7 +34,7 @@ public class ArenaRepository {
                     "spawn2_x, spawn2_y, spawn2_z, spawn2_yaw, spawn2_pitch) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             
             Location spawn1 = arena.getSpawn1();
@@ -76,7 +76,7 @@ public class ArenaRepository {
         String sql = "SELECT name, world, spawn1_x, spawn1_y, spawn1_z, spawn1_yaw, spawn1_pitch, " +
                     "spawn2_x, spawn2_y, spawn2_z, spawn2_yaw, spawn2_pitch FROM arenas";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             
@@ -124,7 +124,7 @@ public class ArenaRepository {
         String sql = "SELECT world, spawn1_x, spawn1_y, spawn1_z, spawn1_yaw, spawn1_pitch, " +
                     "spawn2_x, spawn2_y, spawn2_z, spawn2_yaw, spawn2_pitch FROM arenas WHERE name = ?";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, name);
@@ -171,7 +171,7 @@ public class ArenaRepository {
     public Result<Void> deleteArena(String name) {
         String sql = "DELETE FROM arenas WHERE name = ?";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, name);
@@ -194,7 +194,7 @@ public class ArenaRepository {
     public Result<Boolean> arenaExists(String name) {
         String sql = "SELECT 1 FROM arenas WHERE name = ? LIMIT 1";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, name);
@@ -213,7 +213,7 @@ public class ArenaRepository {
     public Result<Integer> getArenaId(String name) {
         String sql = "SELECT id FROM arenas WHERE name = ?";
         
-        try (Connection conn = databaseManager.getConnection();
+        try (Connection conn = this.databaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, name);

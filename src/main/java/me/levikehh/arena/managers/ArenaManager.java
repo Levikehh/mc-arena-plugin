@@ -3,6 +3,7 @@ package me.levikehh.arena.managers;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -84,7 +85,7 @@ public class ArenaManager {
     }
 
     public Collection<Arena> getAllArenas() {
-        return this.arenas.values();
+        return new HashSet<>(this.arenas.values());
     }
 
     public List<Arena> getAvailableArenas() {
