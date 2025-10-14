@@ -9,10 +9,10 @@ import java.util.Map;
 
 import org.bukkit.Location;
 
+import hu.nomindz.devkit.utils.Result;
 import me.levikehh.arena.ArenaPlugin;
 import me.levikehh.arena.database.ArenaRepository;
 import me.levikehh.arena.models.Arena;
-import me.levikehh.arena.utils.Result;
 
 public class ArenaManager {
     private static ArenaManager instance;

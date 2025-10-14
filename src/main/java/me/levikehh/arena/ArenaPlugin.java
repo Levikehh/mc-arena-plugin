@@ -8,9 +8,10 @@ import me.levikehh.arena.listeners.PlayerDeathListener;
 import me.levikehh.arena.listeners.PlayerDisconnectListener;
 import me.levikehh.arena.managers.ArenaManager;
 import me.levikehh.arena.managers.MatchManager;
-import me.levikehh.arena.managers.TimerManager;
 
 import org.bukkit.plugin.java.JavaPlugin;
+
+import hu.nomindz.devkit.managers.TimerManager;
 
 public class ArenaPlugin extends JavaPlugin {
     private DatabaseManager databaseManager;

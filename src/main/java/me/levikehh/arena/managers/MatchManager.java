@@ -9,10 +9,6 @@ import me.levikehh.arena.models.MatchResult;
 import me.levikehh.arena.models.PendingMatch;
 import me.levikehh.arena.models.Match.MatchState;
 import me.levikehh.arena.models.MatchResult.ResultType;
-import me.levikehh.arena.utils.MessageBuilder;
-import me.levikehh.arena.utils.MessageFormatter;
-import me.levikehh.arena.utils.TimeFormatter;
-import me.levikehh.arena.utils.TimedTask;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -20,6 +16,9 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+
+import hu.nomindz.devkit.managers.TimerManager;
+import hu.nomindz.devkit.utils.*;
 
 import java.sql.Timestamp;
 import java.util.*;
@@ -46,11 +45,11 @@ public class MatchManager {
         return instance;
     }
 
-    public boolean removePendingMatch(Player player1, Player player2) {
+    public boolean removePendingMatch(Player initiator, Player target) {
         // TODO: could be done by checking id, but wanna make sure the player objects are the same so no MITM can be achieved.
         return this.pendingMatches.removeIf(pendingMatch -> {
-            return pendingMatch.getData().getInitiator().equals(player1) &&
-                    pendingMatch.getData().getTarget().equals(player2);
+            return pendingMatch.getData().getInitiator().equals(initiator) &&
+                    pendingMatch.getData().getTarget().equals(target);
         });
     }
 
@@ -85,16 +84,16 @@ public class MatchManager {
             return false;
         }
 
-        this.timer.startTimer(
+        TimedTask<PendingMatch> timedTask = this.timer.startTimer(
                 "pending_" + pendingMatch.getId(),
                 pendingMatch,
                 60,
                 null,
                 () -> {
-                    this.pendingMatches.remove(task);
+                    this.removePendingMatch(pendingMatch.getInitiator(), pendingMatch.getTarget());
                 });
 
-        this.pendingMatches.add(task);
+        this.pendingMatches.add(timedTask);
 
         return true;
     }

@@ -10,8 +10,8 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
+import hu.nomindz.devkit.utils.Result;
 import me.levikehh.arena.models.Arena;
-import me.levikehh.arena.utils.Result;
 
 public class ArenaRepository {
     private static ArenaRepository instance;

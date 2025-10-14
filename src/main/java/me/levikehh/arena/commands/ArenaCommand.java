@@ -4,9 +4,6 @@ import me.levikehh.arena.managers.ArenaManager;
 import me.levikehh.arena.managers.MatchManager;
 import me.levikehh.arena.models.Arena;
 import me.levikehh.arena.models.PendingMatch;
-import me.levikehh.arena.utils.MessageBuilder;
-import me.levikehh.arena.utils.MessageFormatter;
-import me.levikehh.arena.utils.TimeFormatter;
 import me.levikehh.arena.ArenaPlugin;
 import me.levikehh.arena.database.MatchResultRepository;
 
@@ -17,6 +14,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 
+import hu.nomindz.devkit.utils.*;
 import net.md_5.bungee.api.chat.ClickEvent;
 
 import java.util.Arrays;
@@ -150,17 +148,17 @@ public class ArenaCommand implements CommandExecutor {
     private void listArenas(Player player) {
         try {
             List<Arena> arenas = (List<Arena>) this.arenaManager.getAllArenas();
-    
+
             if (arenas.isEmpty()) {
                 player.sendMessage(MessageFormatter.error("No arenas have been created yet!"));
                 return;
             }
-    
+
             player.sendMessage(MessageFormatter.header("Arenas (" + arenas.size() + ")"));
-    
+
             for (Arena arena : arenas) {
                 String status = arena.isOccupied() ? "[OCCUPIED]" : "[AVAILABLE]";
-    
+
                 player.spigot().sendMessage(new MessageBuilder().addSuccess("• ").addVariable(arena.getName())
                         .addSuccess(" ").addVariable(status).build());
             }
@@ -169,11 +167,12 @@ public class ArenaCommand implements CommandExecutor {
         }
     }
 
-    private void challengePlayer(Player player, String[] args) {
+    private void challengePlayer(Player initiator, String[] args) {
         String name = args[0];
 
-        if (this.matchManager.isInMatch(player)) {
-            player.spigot()
+        // Check matches
+        if (this.matchManager.isInMatch(initiator)) {
+            initiator.spigot()
                     .sendMessage(new MessageBuilder().addError("You can't start a new fight while participating in one")
                             .build());
             return;
@@ -181,25 +180,37 @@ public class ArenaCommand implements CommandExecutor {
 
         Player target = this.plugin.getServer().getPlayer(name);
         if (target == null) {
-            player.spigot()
+            initiator.spigot()
                     .sendMessage(new MessageBuilder().addError("Player not found. Maybe they are offline?").build());
             return;
         }
 
-        if (player.equals(target)) {
-            player.spigot()
+        if (initiator.equals(target)) {
+            initiator.spigot()
                     .sendMessage(new MessageBuilder().addError("You can't challenge yourself").build());
             return;
         }
 
         if (this.matchManager.isInMatch(target)) {
-            player.spigot()
+            initiator.spigot()
                     .sendMessage(new MessageBuilder().addError("You can't challenge a player whos already in a fight")
                             .build());
             return;
         }
 
-        PendingMatch pendingMatch = new PendingMatch(player, target);
+        // Check pending matches
+        PendingMatch pendingMatch = this.matchManager.getPendingMatches()
+                .stream()
+                .filter(match -> match.getInitiator().equals(target) && match.getTarget().equals(initiator))
+                .findFirst()
+                .orElse(null);
+
+        if (pendingMatch != null) {
+            this.acceptChallenge(initiator, new String[]{target.getDisplayName()});
+            return;
+        }
+
+        pendingMatch = new PendingMatch(initiator, target);
         if (!this.matchManager.setPendingMatch(pendingMatch)) {
             return;
         }
@@ -207,31 +218,45 @@ public class ArenaCommand implements CommandExecutor {
         MessageBuilder message = new MessageBuilder();
 
         message
-                .addVariable(player.getDisplayName())
+                .addVariable(initiator.getDisplayName())
                 .addSuccess(" challenged you for a PvP Arena match.\n")
                 .addSuccess("Do you ")
                 .addClickable("accept",
-                        new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/arena accept " + player.getDisplayName()), null)
+                        new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/arena accept " + initiator.getDisplayName()),
+                        null)
                 .addSuccess(" or ")
                 .addClickable("decline",
-                        new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/arena decline " + player.getDisplayName()),
+                        new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/arena decline " + initiator.getDisplayName()),
                         null)
                 .addSuccess(" it?");
 
         target.spigot().sendMessage(message.build());
-        player.spigot().sendMessage(new MessageBuilder().addSuccess("You successfully challenged ").addVariable(name)
+        initiator.spigot().sendMessage(new MessageBuilder().addSuccess("You successfully challenged ").addVariable(name)
                 .addSuccess("!").build());
     }
 
     private void acceptChallenge(Player player, String[] args) {
         String name = args[0];
-        Player target = this.plugin.getServer().getPlayer(name);
-        if (target == null) {
+        Player initiator = this.plugin.getServer().getPlayer(name);
+        if (initiator == null) {
             player.spigot()
                     .sendMessage(new MessageBuilder().addError("Player not found. Maybe they are offline?").build());
             return;
         }
 
+        // Check if there is a pending match
+        PendingMatch pendingMatch = this.matchManager.getPendingMatches().stream()
+                .filter(match -> match.getInitiator().equals(initiator)).findFirst().orElse(null);
+
+        if (pendingMatch == null) {
+            player.spigot().sendMessage(
+                    new MessageBuilder().addError("Could not find pending challenge with this player").build());
+            return;
+        }
+
+        this.matchManager.removePendingMatch(initiator, player);
+
+        // Start match
         List<Arena> availableArenas = this.arenaManager.getAvailableArenas();
         if (availableArenas.isEmpty()) {
             player.spigot().sendMessage(new MessageBuilder().addError("All the arenas are occupied").build());
@@ -239,22 +264,22 @@ public class ArenaCommand implements CommandExecutor {
         }
 
         Arena arena = availableArenas.get(0);
-        this.matchManager.startMatch(arena, player, target);
+        this.matchManager.startMatch(arena, initiator, player);
     }
 
     private void declineChallenge(Player player, String[] args) {
         String name = args[0];
-        Player target = this.plugin.getServer().getPlayer(name);
-        if (target == null) {
+        Player initiator = this.plugin.getServer().getPlayer(name);
+        if (initiator == null) {
             player.spigot()
                     .sendMessage(new MessageBuilder().addError("Player not found. Maybe they are offline?").build());
             return;
         }
 
         player.sendMessage(ChatColor.YELLOW + "Match against " + ChatColor.GRAY + name + " has been declined");
-        target.sendMessage(ChatColor.GRAY + player.getDisplayName() + " declined the match");
+        initiator.sendMessage(ChatColor.GRAY + player.getDisplayName() + " declined the match");
 
-        this.matchManager.removePendingMatch(player, target);
+        this.matchManager.removePendingMatch(initiator, player);
     }
 
     private void showPlayerStats(Player player, String[] args) {
