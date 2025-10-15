@@ -1,0 +1,10 @@
+config_version: 1
+
+database:
+  file: "arena.db"
+
+match:
+  duration_seconds: 180
+  countdown_seconds: 3
+  rewards:
+    enchanted_golden_apple_on_kill: true

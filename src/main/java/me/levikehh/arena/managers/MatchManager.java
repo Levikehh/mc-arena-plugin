@@ -99,7 +99,7 @@ public class MatchManager {
     }
 
     public void startMatch(Arena arena, Player player1, Player player2) {
-        int duration = 3 * 60;
+        int duration = this.plugin.config().match().duration_seconds();
         Match match = new Match(arena, player1, player2, duration);
 
         this.removePendingMatch(player1, player2);
@@ -137,7 +137,7 @@ public class MatchManager {
         this.timer.startTimer(
                 "countdown_" + match.getId(),
                 null,
-                3,
+                this.plugin.config().match().countdown_seconds(),
                 (remainingSeconds) -> {
                     if (remainingSeconds > 0) {
                         String message = ChatColor.GOLD + "" + ChatColor.BOLD + remainingSeconds;

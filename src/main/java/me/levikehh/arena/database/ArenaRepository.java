@@ -10,6 +10,7 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
+import hu.nomindz.devkit.managers.DatabaseManager;
 import hu.nomindz.devkit.utils.Result;
 import me.levikehh.arena.models.Arena;
 
