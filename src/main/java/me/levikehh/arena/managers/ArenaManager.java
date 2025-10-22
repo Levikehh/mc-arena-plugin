@@ -27,7 +27,7 @@ public class ArenaManager {
         this.loadArenas();
     }
 
-    public static ArenaManager getInstnace(ArenaPlugin plugin, ArenaRepository repository) {
+    public static ArenaManager getInstance(ArenaPlugin plugin, ArenaRepository repository) {
         if (instance == null) {
             instance = new ArenaManager(plugin, repository);
         }

@@ -46,8 +46,13 @@ public class MatchManager {
     }
 
     public boolean removePendingMatch(Player initiator, Player target) {
-        // TODO: could be done by checking id, but wanna make sure the player objects are the same so no MITM can be achieved.
         return this.pendingMatches.removeIf(pendingMatch -> {
+            TimedTask<PendingMatch> task = this.timer.getTask("pending_" + pendingMatch.getId());
+            if (task != null) {
+                this.timer.stopTimer(task.getId());
+            }
+            
+            // TODO: could be done by checking id, but wanna make sure the player objects are the same so no MITM can be achieved.
             return pendingMatch.getData().getInitiator().equals(initiator) &&
                     pendingMatch.getData().getTarget().equals(target);
         });
@@ -194,14 +199,14 @@ public class MatchManager {
     }
 
     private void endMatch(Match match, MatchResult.ResultType resultType, Player winner, Player loser) {
-        this.timer.stopTimer(match.getId());
+        int duration = this.timer.getTask(match.getId()).getElapsedSeconds();
 
+        this.timer.stopTimer(match.getId());
         match.setState(Match.MatchState.FINISHED);
 
         Player p1 = match.getPlayer1();
         Player p2 = match.getPlayer2();
 
-        int duration = match.getElapsedSeconds();
         MatchResult result = new MatchResult(resultType, winner, loser, duration);
 
         this.announceResult(match, result);

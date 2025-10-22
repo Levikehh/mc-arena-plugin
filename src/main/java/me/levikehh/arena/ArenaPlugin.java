@@ -1,7 +1,6 @@
 package me.levikehh.arena;
 
-import me.levikehh.arena.commands.ArenaCommand;
-import me.levikehh.arena.commands.ArenaTabCompleter;
+import me.levikehh.arena.commands.ArenaCommands;
 import me.levikehh.arena.config.ArenaConfig;
 import me.levikehh.arena.database.ArenaRepository;
 import me.levikehh.arena.listeners.PlayerDeathListener;
@@ -13,6 +12,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import hu.nomindz.devkit.managers.DatabaseManager;
 import hu.nomindz.devkit.managers.TimerManager;
+import hu.nomindz.devkit.command.CommandRegistry;
 import hu.nomindz.devkit.config.ConfigFactory;
 import hu.nomindz.devkit.config.ConfigManager;
 
@@ -22,6 +22,7 @@ public class ArenaPlugin extends JavaPlugin {
     private ArenaManager arenaManager;
     private TimerManager timer;
     private ConfigManager<ArenaConfig> configManager;
+    private CommandRegistry commands;
 
     @Override
     public void onEnable() {
@@ -41,7 +42,7 @@ public class ArenaPlugin extends JavaPlugin {
 
         this.timer = TimerManager.getInstance(this);
         this.matchManager = MatchManager.getInstance(this, this.timer);
-        this.arenaManager = ArenaManager.getInstnace(this, ArenaRepository.getInstance(this.databaseManager));
+        this.arenaManager = ArenaManager.getInstance(this, ArenaRepository.getInstance(this.databaseManager));
 
         this.registerCommands();
         this.registerListeners();
@@ -67,12 +68,11 @@ public class ArenaPlugin extends JavaPlugin {
     }
 
     private void registerCommands() {
-        ArenaCommand arenaCommand = new ArenaCommand(this, this.matchManager, this.arenaManager);
-        ArenaTabCompleter arenaTabCompleter = new ArenaTabCompleter(this,
-                ArenaRepository.getInstance(this.databaseManager));
+        this.commands = new CommandRegistry(this);
 
-        getCommand("arena").setExecutor(arenaCommand);
-        getCommand("arena").setTabCompleter(arenaTabCompleter);
+        this.commands.registerAll(new ArenaCommands());
+
+        getLogger().info("Commands registered.");
     }
 
     private void registerListeners() {
@@ -88,6 +88,10 @@ public class ArenaPlugin extends JavaPlugin {
 
     public MatchManager getMatchManager() {
         return this.matchManager;
+    }
+
+    public ArenaManager getArenaManager() {
+        return this.arenaManager;
     }
 
     public ArenaConfig config() {

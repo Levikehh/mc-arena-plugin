@@ -11,7 +11,6 @@ public class Match {
     private final Player player2;
     private final long startTime;
     private final int durationSeconds;
-    private int remainingSeconds;
     private MatchState state;
 
     public enum MatchState {
@@ -28,7 +27,6 @@ public class Match {
         this.player2 = player2;
         this.startTime = System.currentTimeMillis();
         this.durationSeconds = durationSeconds;
-        this.remainingSeconds = durationSeconds;
         this.state = MatchState.WAITING;
     }
 
@@ -80,25 +78,5 @@ public class Match {
 
     public int getDuration() {
         return this.durationSeconds;
-    }
-
-    public int getRemainingSeconds() {
-        return this.remainingSeconds;
-    }
-
-    public void setRemainingSeconds(int seconds) {
-        this.remainingSeconds = seconds;
-    }
-
-    public void decrementTime() {
-        this.remainingSeconds--;
-    }
-
-    public int getElapsedSeconds() {
-        return this.durationSeconds - this.remainingSeconds;
-    }
-
-    public boolean isTimeUp() {
-        return this.remainingSeconds <= 0;
     }
 }

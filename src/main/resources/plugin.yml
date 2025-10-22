@@ -7,10 +7,9 @@ description: A plugin to start PvP fights on your Minecraft server
 
 commands:
   arena:
-    description: Manage arena functionalities
-    usage: "Usage: /arena [challange]"
+    description: Arena root
+    usage: /arena
 
 permissions:
-  arena.*:
-    description: Gives access to all arena commands
-    default: true
+  arena.debug: { default: op }
+  arena.admin: { default: op }
