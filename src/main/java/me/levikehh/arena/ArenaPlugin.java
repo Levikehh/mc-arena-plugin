@@ -26,6 +26,12 @@ public class ArenaPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        if (!getDataFolder().exists() && !getDataFolder().mkdirs()) {
+            getLogger().severe("Could not create data folder: " + getDataFolder());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
         this.configManager = ConfigFactory.create(
                 this,
                 ArenaConfig.class,
